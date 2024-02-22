@@ -69,7 +69,7 @@ def analyse_engine_data(engine_id, begin_of_analysis, visualise):
     check_threshold_and_alert(engine_id, temperature_readings, "temperature_celsius")
 
     if visualise:
-        visualise_engine_data(timestamps, voltage_readings, rpm_readings, thrust_readings, temperature_readings)
+        visualise_engine_data(engine_id, timestamps, voltage_readings, rpm_readings, thrust_readings, temperature_readings)
 
 
 def check_threshold_and_alert(engine_id, data, reading_type):
@@ -86,6 +86,7 @@ def check_threshold_and_alert(engine_id, data, reading_type):
         Console output giving high level information about the status of an engine
 
     """
+
     min_threshold = float(thresholds_low.get(reading_type))
     max_threshold = float(thresholds_high.get(reading_type))
 
@@ -107,64 +108,78 @@ def check_threshold_and_alert(engine_id, data, reading_type):
 
     # Traffic light: red
     if min_value <= min_threshold:
-        alert(engine_id, reading_type, 0)
+        alert(engine_id, reading_type, min_value, 0)
         traffic_light[engine_id] = "red"
     if max_value >= max_threshold:
-        alert(engine_id, reading_type, 1)
+        alert(engine_id, reading_type, max_value, 1)
         traffic_light[engine_id] = "red"
 
 
-def visualise_engine_data(timestamps, voltage_readings, rpm_readings, thrust_readings, temperature_readings):
-    time = [row['timestamp'] for row in timestamps]
+def visualise_engine_data(engine_id, timestamps, voltage_readings, rpm_readings, thrust_readings, temperature_readings):
+    """
+        This function maps the spark dataframes to pandas and creates plots for each reading.
+
+        Parameters:
+        timestamps (spark_df)
+        voltage_readings (spark_df)
+        rpm_readings (spark_df)
+        thrust_readings (spark_df)
+        temperature_readings (spark_df)
+
+        Returns:
+        Graphs
+    """
+
+    time = [row["timestamp"] for row in timestamps]
     time = list(dict.fromkeys(time))  # Removing all duplicates
     voltage_readings = voltage_readings.toPandas()
     rpm_readings = rpm_readings.toPandas()
     thrust_readings = thrust_readings.toPandas()
     temperature_readings = temperature_readings.toPandas()
 
-    voltage = voltage_readings['value'].tolist()
-    rpm = rpm_readings['value'].tolist()
-    thrust = thrust_readings['value'].tolist()
-    temperature = temperature_readings['value'].tolist()
+    voltage = voltage_readings["value"].tolist()
+    rpm = rpm_readings["value"].tolist()
+    thrust = thrust_readings["value"].tolist()
+    temperature = temperature_readings["value"].tolist()
 
+    engine_id = engine_id.upper()
     plt.figure(figsize=(10, 6))
 
     # Plot voltage readings
     plt.subplot(2, 2, 1)
-    plt.plot(time, voltage, color='blue')
-    plt.title('Voltage Readings')
-    plt.xlabel('Timestamp')
-    plt.ylabel('Voltage')
+    plt.plot(time, voltage, color="blue")
+    plt.title("Voltage Readings" + " : " + engine_id)
+    plt.xlabel("Timestamp")
+    plt.ylabel("Voltage")
 
     # Plot RPM readings
     plt.subplot(2, 2, 2)
-    plt.plot(time, rpm, color='green')
-    plt.title('Rotor Speed (RPM) Readings')
-    plt.xlabel('Timestamp')
-    plt.ylabel('Rotor Speed (RPM)')
+    plt.plot(time, rpm, color="green")
+    plt.title("Rotor Speed (RPM) Readings" + " : " + engine_id)
+    plt.xlabel("Timestamp")
+    plt.ylabel("Rotor Speed (RPM)")
 
     # Plot thrust readings
     plt.subplot(2, 2, 3)
-    plt.plot(time, thrust, color='red')
-    plt.title('Thrust (Newton) Readings')
-    plt.xlabel('Timestamp')
-    plt.ylabel('Thrust (Newton)')
+    plt.plot(time, thrust, color="red")
+    plt.title("Thrust (Newton) Readings" + " : " + engine_id)
+    plt.xlabel("Timestamp")
+    plt.ylabel("Thrust (Newton)")
 
     # Plot temperature readings
     plt.subplot(2, 2, 4)
-    plt.plot(time, temperature, color='orange')
-    plt.title('Temperature (Celsius) Readings')
-    plt.xlabel('Timestamp')
-    plt.ylabel('Temperature (Celsius)')
+    plt.plot(time, temperature, color="orange")
+    plt.title("Temperature (Celsius) Readings" + " : " + engine_id)
+    plt.xlabel("Timestamp")
+    plt.ylabel("Temperature (Celsius)")
 
     plt.tight_layout()
     plt.show()
 
 
-def alert(engine_id, reading_type, type_of_threshold):
+def alert(engine_id, reading_type, value, type_of_threshold):
     """
-        This function analyses voltage, rpm, thrust and temperature readings
-        of an engine and alters if a certain threshold has been exceeded.
+        Alerts to console
 
         Parameters:
         engine_id (String): Specify the engine you want to analise. Keep the format of the dataset in mind.
@@ -174,13 +189,14 @@ def alert(engine_id, reading_type, type_of_threshold):
         Returns:
         Console output
     """
-    print("############################################################")
+
+    print("************************************************************")
     print("Alert for " + engine_id.upper() + ":")
     if type_of_threshold == 0:
-        print(reading_type.upper() + " readings LOWER than threshold.")
+        print(reading_type.upper() + " readings LOWER than threshold: " + str(value))
     else:
-        print(reading_type.upper() + " readings HIGHER than threshold.")
-    print("############################################################")
+        print(reading_type.upper() + " readings HIGHER than threshold: " + str(value))
+    print("************************************************************")
 
 
 def get_max(readings_df):
@@ -198,12 +214,31 @@ def get_avg(readings_df):
     return float(avg_value)
 
 
-if __name__ == '__main__':
+def print_traffic_light():
+    for engine, color in traffic_light.items():
+        border = "*" * (len(engine) + 4)
+
+        # ANSI escape codes for changing text color
+        color_code = ""
+        if color == "green":
+            color_code = "\033[92m"  # Green color
+        elif color == "yellow":
+            color_code = "\033[93m"  # Yellow color
+        elif color == "red":
+            color_code = "\033[91m"  # Red color
+
+        # Print engine name with border and color
+        print(border)
+        print(f'* {color_code}{engine}\033[0m *')  # Reset color after engine name
+        print(border)
+
+
+if __name__ == "__main__":
     begin_of_analysis = "2024-02-09 08:00:00"
-    for i in range(1, 10):
+    for i in range(1, 11):
         engine_id = "engine_" + str(i)
-        analyse_engine_data(engine_id, begin_of_analysis, True)
-    print(traffic_light)
+        analyse_engine_data(engine_id, begin_of_analysis, False)
+    print_traffic_light()
 
 
 spark.stop()
