@@ -237,7 +237,7 @@ if __name__ == "__main__":
     begin_of_analysis = "2024-02-09 08:00:00"
     for i in range(1, 11):
         engine_id = "engine_" + str(i)
-        analyse_engine_data(engine_id, begin_of_analysis, False)
+        analyse_engine_data(engine_id, begin_of_analysis, True)
     print_traffic_light()
 
 
