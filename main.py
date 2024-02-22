@@ -40,12 +40,12 @@ def analyse_engine_data(engine_id, begin_of_analysis, visualise):
         This function analyses voltage, rpm, thrust and temperature readings
         of an engine and alters if a certain threshold has been exceeded.
 
-        Parameters:
+        :param:
         engine_id (String): Specify the engine you want to analise. Keep the format of the dataset in mind.
         begin_of_analysis(String): Specify from which point on the data should be analysed; Format: 2024-02-09 08:00:00
         visualise (Boolean):
 
-        Returns:
+        :return:
         Console output giving high level information about the status of an engine
         Optionally: Graph of engines data
     """
@@ -77,12 +77,12 @@ def check_threshold_and_alert(engine_id, data, reading_type):
         This function compares the data to the min and max thresholds and sets the traffic light for the engine.
         An alert to the console is printed when the traffic light is set to yellow or red.
 
-        Parameters:
+        :param:
         engine_id (String): Specify the engine you want to analise. Keep the format of the dataset in mind.
-        data(spark_df): readings of a specific type
+        data (spark_df): readings of a specific type
         reading_type (String): Exact type as specified in the thresholds dictionaries
 
-        Returns:
+        :return:
         Console output giving high level information about the status of an engine
 
     """
@@ -119,14 +119,14 @@ def visualise_engine_data(engine_id, timestamps, voltage_readings, rpm_readings,
     """
         This function maps the spark dataframes to pandas and creates plots for each reading.
 
-        Parameters:
+        :param:
         timestamps (spark_df)
         voltage_readings (spark_df)
         rpm_readings (spark_df)
         thrust_readings (spark_df)
         temperature_readings (spark_df)
 
-        Returns:
+        :return:
         Graphs
     """
 
@@ -181,12 +181,12 @@ def alert(engine_id, reading_type, value, type_of_threshold):
     """
         Alerts to console
 
-        Parameters:
+        :param:
         engine_id (String): Specify the engine you want to analise. Keep the format of the dataset in mind.
         reading_type (String):
         type (int): 0 == minimum threshold; 1 == maximum threshold
 
-        Returns:
+        :return:
         Console output
     """
 
@@ -239,6 +239,6 @@ if __name__ == "__main__":
         engine_id = "engine_" + str(i)
         analyse_engine_data(engine_id, begin_of_analysis, True)
     print_traffic_light()
+    spark.stop()
 
 
-spark.stop()
